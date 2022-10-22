@@ -1,6 +1,8 @@
-import Utils.{mean, variance}
+import Utils.{mapToMeanVariance, mean, variance}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
+
+import scala.collection.mutable.ListBuffer
 
 object SparkMain extends App {
   val conf = new SparkConf().setAppName("Spark and SparkSql").setMaster("local")
@@ -23,60 +25,26 @@ object SparkMain extends App {
   val meanVariance = population.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
   meanVariance.toDF("Category", "{Mean, Variance}").show(truncate = false)
 
-  val noOfrecords = data.count().toInt/4 // get 25% of the records in the sample
-  val setosaSample = population.filter(item => item._1.equals("setosa")).takeSample(false, noOfrecords)
-  val versicolorSample = population.filter(item => item._1.equals("versicolor")).takeSample(false, noOfrecords)
-  val virginicaSample = population.filter(item => item._1.equals("virginica")).takeSample(false, noOfrecords)
+  val sampleCount = data.count().toInt / 4 // get 25% of the records in the sample
+  val setosaSample = population.filter(item => item._1.equals("setosa")).takeSample(false, sampleCount)
+  val versicolorSample = population.filter(item => item._1.equals("versicolor")).takeSample(false, sampleCount)
+  val virginicaSample = population.filter(item => item._1.equals("virginica")).takeSample(false, sampleCount)
 
   // Resample 1000 times
-  var setosaMeanTotal=0.0
-  var setosavarianceTotal=0.0
+  var setosa = (setosaSample, new ListBuffer[(String, (Double, Double))]())
+  var versicolor = (versicolorSample, new ListBuffer[(String, (Double, Double))]())
+  var virginica = (virginicaSample, new ListBuffer[(String, (Double, Double))]())
+  val categories = List(setosa, versicolor, virginica)
 
-  var versiColorMeanTotal = 0.0
-  var versiColorVarianceTotal = 0.0
-
-  var virginicaMeanTotal = 0.0
-  var virginicaVarianceTotal = 0.0
   for (_ <- 1 until 10) {
-    // TODO: Resample
-        // val setosaSampleRDD=sc.parallelize(setosaSample)
-          val setosaReSampleRDD = sc.parallelize(sc.parallelize(setosaSample).takeSample(true,noOfrecords))
-            val setosaMeanvariance=setosaReSampleRDD.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
-          setosaMeanvariance.toDF("category","Mean , Variance").show(false)
-    setosaMeanTotal=setosaMeanTotal + (setosaMeanvariance.first()._2._1);
-    setosavarianceTotal=setosavarianceTotal+(setosaMeanvariance.first()._2._2);
-    // TODO: Mean and variance
-    // TODO: Add to Running Sum
-
-
-    // TODO: Resample
-    // val setosaSampleRDD=sc.parallelize(setosaSample)
-    val versiColorReSampleRDD = sc.parallelize(sc.parallelize(versicolorSample).takeSample(true, noOfrecords))
-    val  versiColorMeanvariance = versiColorReSampleRDD.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
-    versiColorMeanvariance.toDF("category", "Mean , Variance").show(false)
-    versiColorMeanTotal = versiColorMeanTotal + (versiColorMeanvariance.first()._2._1);
-    versiColorVarianceTotal =  versiColorVarianceTotal + (versiColorMeanvariance.first()._2._2);
-    // TODO: Mean and variance
-    // TODO: Add to Running Sum
-
-
-    // TODO: Resample
-    // val setosaSampleRDD=sc.parallelize(setosaSample)
-    val virginicaReSampleRDD = sc.parallelize(sc.parallelize(virginicaSample).takeSample(true, noOfrecords))
-    val virginicaMeanvariance = virginicaReSampleRDD.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
-    virginicaMeanvariance.toDF("category", "Mean , Variance").show(false)
-    virginicaMeanTotal = virginicaMeanTotal + (virginicaMeanvariance.first()._2._1);
-    virginicaVarianceTotal = virginicaVarianceTotal + (virginicaMeanvariance.first()._2._2);
-    // TODO: Mean and variance
-    // TODO: Add to Running Sum
+    categories.foreach(c => {
+      val reSampleRDD = sc.parallelize(sc.parallelize(c._1).takeSample(true, sampleCount))
+      mapToMeanVariance(reSampleRDD).collect().foreach(s => c._2 += s)
+    })
   }
 
-  println("Overall mean for Setosa" + setosaMeanTotal / 10)
-  println("Overall variance for Setosa" + setosavarianceTotal / 10)
-
-  println("Overall mean for Versicolor" + versiColorMeanTotal / 10)
-  println("Overall variance for Versicolor" + versiColorVarianceTotal / 10)
-
-  println("Overall mean for Virginica" + virginicaMeanTotal / 10)
-  println("Overall variance for Virginica" + virginicaVarianceTotal / 10)
+  val allMeanVariance:Map[String,(Double, Double)] = Map()
+  categories.foreach(c => {
+    allMeanVariance += (c._2(0)._1, (c._2.map(v => v._2._1).sum / c._2.size), c._2.map(v => v._2._2).sum / c._2.size)
+  })
 }

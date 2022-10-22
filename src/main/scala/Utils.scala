@@ -9,5 +9,7 @@ object Utils {
     sl.sum / (sl.size - 1)
   }
 
-  // TODO: create util method for resample
+  def mapToMeanVariance(sample: RDD[(String, Double)]): RDD[(String, (Double, Double))] = {
+    sample.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
+  }
 }
