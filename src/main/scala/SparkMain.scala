@@ -21,5 +21,17 @@ object SparkMain extends App {
   population.toDF("Species", "Sepal.Length").show(truncate = false)
 
   val meanVariance = population.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
-  meanVariance.toDF("Category", "[Mean, Variance]").show(truncate = false)
+  meanVariance.toDF("Category", "{Mean, Variance}").show(truncate = false)
+
+  val fraction = 0.25
+  val setosaSample = population.filter(item => item._1.equals("setosa")).sample(false, fraction)
+  val versicolorSample = population.filter(item => item._1.equals("versicolor")).sample(false, fraction)
+  val virginicaSample = population.filter(item => item._1.equals("virginica")).sample(false, fraction)
+
+  // Resample 1000 times
+  for (_ <- 1 until 1000) {
+    // TODO: Resample
+    // TODO: Mean and variance
+    // TODO: Add to Running Sum
+  }
 }
