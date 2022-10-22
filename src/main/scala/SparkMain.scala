@@ -3,6 +3,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable.ListBuffer
+import collection.mutable.Map
 
 object SparkMain extends App {
   val conf = new SparkConf().setAppName("Spark and SparkSql").setMaster("local")
@@ -43,8 +44,8 @@ object SparkMain extends App {
     })
   }
 
-  val allMeanVariance:Map[String,(Double, Double)] = Map()
+  val allMeanVariance: Map[String, (Double, Double)] = Map()
   categories.foreach(c => {
-    allMeanVariance += (c._2(0)._1, (c._2.map(v => v._2._1).sum / c._2.size), c._2.map(v => v._2._2).sum / c._2.size)
+    allMeanVariance += (c._2(0)._1 -> (c._2.map(v => v._2._1).sum / c._2.size, c._2.map(v => v._2._2).sum / c._2.size))
   })
 }
