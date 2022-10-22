@@ -13,7 +13,9 @@ object SparkMain extends App {
   val titleRow = textFile.first()
   val data = textFile.filter(row => row != titleRow) // Assuming csv will always have a title row
 
+
   val population = data.map(line => line.split(",")).map(x => (x(5).replace("\"",""), x(4).toDouble))
+
   //TODO: Display the population
 
   val meanVariance = population.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
