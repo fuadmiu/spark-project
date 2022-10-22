@@ -1,9 +1,13 @@
 import Utils.{mean, variance}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.{SparkConf, SparkContext}
 
 object SparkMain extends App {
   val conf = new SparkConf().setAppName("Spark and SparkSql").setMaster("local")
   val sc = new SparkContext(conf)
+
+  val spark = SparkSession.builder.config(sc.getConf).getOrCreate()
+  import spark.implicits._
 
   sc.setLogLevel("ERROR")
 
@@ -13,11 +17,9 @@ object SparkMain extends App {
   val titleRow = textFile.first()
   val data = textFile.filter(row => row != titleRow) // Assuming csv will always have a title row
 
-
-  val population = data.map(line => line.split(",")).map(x => (x(5).replace("\"",""), x(4).toDouble))
-
-  //TODO: Display the population
+  val population = data.map(line => line.split(",")).map(x => (x(5).replace("\"",""), x(1).toDouble))
+  population.toDF("Species", "Sepal.Length").show(truncate = false)
 
   val meanVariance = population.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
-  //meanVariance.collect().foreach(println)
+  meanVariance.toDF("Category", "[Mean, Variance]").show(truncate = false)
 }
