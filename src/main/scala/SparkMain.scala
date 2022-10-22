@@ -48,4 +48,11 @@ object SparkMain extends App {
   categories.foreach(c => {
     allMeanVariance += (c._2(0)._1 -> (c._2.map(v => v._2._1).sum / c._2.size, c._2.map(v => v._2._2).sum / c._2.size))
   })
+
+  println("Category \t\t (Mean, Variance)")
+  println("==================================")
+  for((k, v) <- allMeanVariance) {
+    printf("[%s\t\t(%.2f, %.2f)]\n", k, v._1, v._2)
+  }
+
 }
