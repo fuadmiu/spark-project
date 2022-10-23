@@ -38,7 +38,7 @@ object SparkMain extends App {
   val categories = List(setosa, versicolor, virginica)
 
   println("Resampling 1000 times, please wait......")
-  for (_ <- 1 until 10) {
+  for (_ <- 1 until 1000) {
     categories.foreach(c => {
       val reSampleRDD = sc.parallelize(sc.parallelize(c._1).takeSample(true, sampleCount))
       mapToMeanVariance(reSampleRDD).collect().foreach(s => c._2 += s)
