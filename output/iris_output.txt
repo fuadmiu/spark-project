@@ -1,0 +1,5 @@
+Category 		 (Mean, Variance)
+==================================
+[virginica		(6.65, 0.39)]
+[versicolor		(5.87, 0.30)]
+[setosa		    (4.94, 0.13)]
