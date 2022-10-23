@@ -23,7 +23,7 @@ object SparkMain extends App {
   val population = data.map(line => line.split(",")).map(x => (x(5).replace("\"",""), x(1).toDouble))
   population.toDF("Species", "Sepal.Length").show(truncate = false)
 
-  val meanVariance = population.groupByKey().sortByKey().mapValues(u => (mean(u), variance(u)))
+  val meanVariance = mapToMeanVariance(population)
   meanVariance.toDF("Category", "{Mean, Variance}").show(truncate = false)
 
   val sampleCount = data.count().toInt / 4 // get 25% of the records in the sample
