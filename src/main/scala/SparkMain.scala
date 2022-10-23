@@ -37,6 +37,7 @@ object SparkMain extends App {
   var virginica = (virginicaSample, new ListBuffer[(String, (Double, Double))]())
   val categories = List(setosa, versicolor, virginica)
 
+  println("Resampling 1000 times, please wait......")
   for (_ <- 1 until 10) {
     categories.foreach(c => {
       val reSampleRDD = sc.parallelize(sc.parallelize(c._1).takeSample(true, sampleCount))
